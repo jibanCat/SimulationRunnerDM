@@ -13,9 +13,9 @@ import classylss
 import classylss.binding as CLASS
 from . import utils
 from . import clusters
-from . import read_uvb_tab
 from . import cambpower
 
+# DM-only
 class SimulationICs(object):
     """
     Class for creating the initial conditions for a simulation.
@@ -35,7 +35,6 @@ class SimulationICs(object):
     box - Box size in comoving Mpc/h
     npart - Cube root of number of particles
     redshift - redshift at which to generate ICs
-    separate_gas - if true the ICs will contain baryonic particles. If false, just DM.
     omegab - baryon density. Note that if we do not have gas particles, still set omegab, but set separate_gas = False
     omega0 - Total matter density at z=0 (includes massive neutrinos and baryons)
     hubble - Hubble parameter, h, which is H0 / (100 km/s/Mpc)
@@ -43,8 +42,12 @@ class SimulationICs(object):
     ns - Scalar spectral index
     m_nu - neutrino mass
     unitary - if true, do not scatter modes, but use a unitary gaussian amplitude.
+
+    Remove:
+    ----
+    separate_gas - if true the ICs will contain baryonic particles. If false, just DM.
     """
-    def __init__(self, *, outdir, box, npart, seed = 9281110, redshift=99, redend=0, separate_gas=True, omega0=0.288, omegab=0.0472, hubble=0.7, scalar_amp=2.427e-9, ns=0.97, rscatter=False, m_nu=0, nu_hierarchy='degenerate', uvb="pu", cluster_class=clusters.StampedeClass, nu_acc=1e-5, unitary=True):
+    def __init__(self, *, outdir, box, npart, seed = 9281110, redshift=99, redend=0, omega0=0.288, omegab=0.0472, hubble=0.7, scalar_amp=2.427e-9, ns=0.97, rscatter=False, m_nu=0, nu_hierarchy='degenerate', uvb="pu", cluster_class=clusters.StampedeClass, nu_acc=1e-5, unitary=True):
         #Check that input is reasonable and set parameters
         #In Mpc/h
         assert box < 20000
@@ -84,7 +87,7 @@ class SimulationICs(object):
         #Structure seed.
         self.seed = seed
         #Baryons?
-        self.separate_gas = separate_gas
+        self.separate_gas = False # separate_gas
         #If neutrinos are combined into the DM,
         #we want to use a different CAMB transfer when checking output power.
         self.separate_nu = False
@@ -209,7 +212,7 @@ class SimulationICs(object):
         config['Ngrid'] = self.npart
         config['NgridNu'] = 0
         #config['MaxMemSizePerNode'] = 0.8
-        config['ProduceGas'] = int(self.separate_gas)
+        config['ProduceGas'] = 0 # int(self.separate_gas)
         #Suppress Gaussian mode scattering
         config['UnitaryAmplitude'] = int(self.unitary)
         #The 2LPT correction is computed for one fluid. It is not clear
@@ -334,7 +337,7 @@ class SimulationICs(object):
         config['Omega0'] = self.omega0
         config['OmegaLambda'] = 1- self.omega0
         #OmegaBaryon should be zero for gadget if we don't have gas particles
-        config['OmegaBaryon'] = self.omegab*self.separate_gas
+        config['OmegaBaryon'] = self.omegab* False # self.separate_gas
         config['HubbleParam'] = self.hubble
         config['RadiationOn'] = 1
         config['HydroOn'] = 1
@@ -361,31 +364,34 @@ class SimulationICs(object):
         config['WindModel'] = 'nowind'
         config['BlackHoleOn'] = 0
         config['OutputPotential'] = 0
-        if self.separate_gas:
-            config['CoolingOn'] = 1
-            config['TreeCoolFile'] = "TREECOOL"
-            #Copy a TREECOOL file into the right place.
-            self._copy_uvb()
-            config = self._sfr_params(config)
-            config = self._feedback_params(config)
-        else:
-            config['CoolingOn'] = 0
-            config['StarformationOn'] = 0
+
+        # Removed due to no need for baryon
+        # if self.separate_gas:
+        #     config['CoolingOn'] = 1
+        #     config['TreeCoolFile'] = "TREECOOL"
+        #     #Copy a TREECOOL file into the right place.
+        #     self._copy_uvb()
+        #     config = self._sfr_params(config)
+        #     config = self._feedback_params(config)
+        # else:
+        config['CoolingOn'] = 0
+        config['StarformationOn'] = 0
+
         #Add other config parameters
         config = self._other_params(config)
         config.update(self._cluster.cluster_runtime())
         config.write()
         return
 
-    def _sfr_params(self, config):
-        """Config parameters for the default Springel & Hernquist star formation model"""
-        config['StarformationOn'] = 1
-        config['StarformationCriterion'] = 'density'
-        return config
+    # def _sfr_params(self, config):
+    #     """Config parameters for the default Springel & Hernquist star formation model"""
+    #     config['StarformationOn'] = 1
+    #     config['StarformationCriterion'] = 'density'
+    #     return config
 
-    def _feedback_params(self, config):
-        """Config parameters for the feedback models"""
-        return config
+    # def _feedback_params(self, config):
+    #     """Config parameters for the feedback models"""
+    #     return config
 
     def _other_params(self, config):
         """Function to override to set other config parameters"""
@@ -399,11 +405,6 @@ class SimulationICs(object):
         ii = np.where((times > astart)*(times < aend))
         assert np.size(times[ii]) > 0
         return times[ii]
-
-    def _copy_uvb(self):
-        """The UVB amplitude for Gadget is specified in a file named TREECOOL in the same directory as the gadget binary."""
-        fuvb = read_uvb_tab.get_uvb_filename(self.uvb)
-        shutil.copy(fuvb, os.path.join(self.outdir,"TREECOOL"))
 
     def do_gadget_build(self, gadget_config):
         """Make a gadget build and check it succeeded."""
