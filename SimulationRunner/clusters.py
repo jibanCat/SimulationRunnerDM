@@ -10,12 +10,21 @@ class ClusterClass:
         self.nproc       = nproc
         self.email       = "mho026@ucr.edu"
         self.timelimit   = timelimit
+    
         #Maximum memory available for an MPI task
         self.memory      = 1800
         self.gadgetexe   = gadget
         self.gadgetparam = param
         self.genicexe    = genic
         self.genicparam  = genicparam
+
+    def __repr__(self):
+        '''
+        print out the default setting
+        '''
+        print_string  = "N Processers: {}; Email: {}\n".format(self.nproc, self.email)
+        print_string += "Timelimit: {}\n".format(self.timestring(self.timelimit))
+        return print_string
 
     def generate_mpi_submit(self, outdir):
         """Generate a sample mpi_submit file.
