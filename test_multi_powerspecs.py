@@ -142,6 +142,20 @@ def test_superlowRes_HRsamples(base_dir : str = "data/superlowRes_HRsamples/") -
     test_create_hdf5(all_submission_dirs,
         Latin_json=os.path.join(base_dir, "matterLatin_high.json"))
 
+def test_customRes(base_dir : str, res: int, box: int, n_simulations: int, Latin_json: str):
+    """
+    Create a custom Latin Hyper Cube multi-spec file.
+    """
+    # This is just creating a list of filenames
+    test_dir = lambda i : os.path.join(
+        base_dir, fn_outdir(i, res, box))
+
+    all_submission_dirs = [test_dir(i) for i in range(n_simulations)]
+
+    # test lowRes hdf5
+    test_create_hdf5(all_submission_dirs,
+        Latin_json=os.path.join(base_dir, Latin_json))
+
 
 def test_create_hdf5(all_submission_dirs: List[str], Latin_json: str) -> None:
     multips = MultiPowerSpec(all_submission_dirs, Latin_json)
