@@ -319,7 +319,7 @@ class MultiPowerSpec(object):
         self.Latin_dict = self.load_Latin(self.Latin_json)
 
         # [selected_ind] if you only run partially the Latin Hyper cube
-        if selected_ind != None:
+        if selected_ind is not None:
             for name in self.Latin_dict["parameter_names"]:
                 self.Latin_dict[name] = self.Latin_dict[name][selected_ind]
 
