@@ -9,7 +9,7 @@ Class:
 :MultiPowerSpec: a class to generate a single hdf5 catalogue
     for powerspecs in the folder
 '''
-from typing import Generator, List, Union, Tuple
+from typing import Generator, List, Union, Tuple, Optional
 import re
 import os
 import json
@@ -298,7 +298,7 @@ class MultiPowerSpec(object):
     ...    
     '''
     def __init__(self, all_submission_dirs: List[str],
-            Latin_json: str = "Latin.json") -> None:
+            Latin_json: str = "Latin.json", selected_ind: Optional[np.ndarray] = None) -> None:
         # all the paths you want to load PowerSpecs
         # note these paths will be discared after loading
         # will not store in the hdf5 file.
@@ -307,6 +307,13 @@ class MultiPowerSpec(object):
 
         # load Latin HyperCube sampling into memory
         self.Latin_dict = self.load_Latin(self.Latin_json)
+
+        # [selected_ind] if you only run partially the Latin Hyper cube
+        if selected_ind != None:
+            for name in self.Latin_dict['parameter_names']:
+                self.Latin_dict[name] = self.Latin_dict[name][selected_ind]
+
+                assert len(self.Latin_dict[name]) == len(selected_ind)
 
     @staticmethod
     def load_Latin(Latin_json: str) -> dict:
