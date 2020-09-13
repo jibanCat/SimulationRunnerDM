@@ -1,7 +1,7 @@
 '''
 Test file for creating hdf5 catalogue from multiple simulations
 '''
-from typing import List
+from typing import List, Optional
 import os
 import numpy as np
 import h5py
@@ -157,8 +157,8 @@ def test_customRes(base_dir : str, res: int, box: int, n_simulations: int, Latin
         Latin_json=os.path.join(base_dir, Latin_json))
 
 
-def test_create_hdf5(all_submission_dirs: List[str], Latin_json: str) -> None:
-    multips = MultiPowerSpec(all_submission_dirs, Latin_json)
+def test_create_hdf5(all_submission_dirs: List[str], Latin_json: str, selected_ind: Optional[np.ndarray] = None) -> None:
+    multips = MultiPowerSpec(all_submission_dirs, Latin_json, selected_ind=selected_ind)
 
     # test you have simulations in the dirs
     test_fileload(multips.all_submission_dirs[0])
