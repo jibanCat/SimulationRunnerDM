@@ -9,7 +9,7 @@ do
     if [ $num_files -eq 0 ]
     then
         echo "submitting genic IC files: $f"
-        #sbatch mpi_submit_genic
+        sbatch mpi_submit_genic
     fi
     # move back to base folder
     cd ..
