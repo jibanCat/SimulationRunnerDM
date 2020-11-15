@@ -6,10 +6,10 @@ do
     # move into the folder and submit
     cd $f
 
-    last_powerspec=`ls output | grep power | tail -n 1`
-    if [ $last_powerspec == 'powerspectrum-1.0000.txt' ]
+    output_size=`ls -lh output | wc -l`
+    if [ $output_size -eq 1 ]
     then
-        echo "checking last powerspec file: $f ...$last_powerspec"
+        echo "checking output folder size: $f/output ...$output_size"
         echo " ... submitting gadget files: $f"
         sbatch mpi_submit
     fi
