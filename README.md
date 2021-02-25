@@ -1,5 +1,7 @@
 # Python code to automate the generation of Gadget3 simulation config files
 
+**Note: this repo now only supports running dark-matter only simulations**.
+
 The base class is Simulation, which creates the config files for a single simulation.
 
 Machine-specific data is implemented with a function which dynamically subclasses the base class.
