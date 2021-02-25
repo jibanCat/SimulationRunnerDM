@@ -70,9 +70,9 @@ Further information about the output files please check MP-Gadget manual.
 For example, `output/powerspectrum-<scale factor>.txt` contains the data for the matter power spectrum.
 The scale factor is from 0 ~ 1, where 1 means the current Universe.
 
-### Generate a single submission file
+### Generate submission files for a single simulation
 
-If you only want to perform a single simulation, so this in Python:
+If you only want to perform a single simulation, do this in Python:
 ```python
 from SimulationRunner import simulationics, clusters
 
