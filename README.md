@@ -8,12 +8,14 @@ Machine-specific data is implemented with a function which dynamically subclasse
 
 ## How to generate submission files for BIOCluster
 
-### Generate a batch of submission files
+### Generate submission files for a batch of simulations
 
-In this section, we will outline how to use the `SimulationICs` class to generate a batch of submission files for MP-Gadget.
+In this section, we will outline how to use the `SimulationICs` class to generate submission files for a batch of simulations for [MP-Gadget](https://github.com/MP-Gadget/MP-Gadget).
 We will use `run_dmonly.py` to produce the submission files.
 
 First, make sure you have compiled the MP-Gadget software on the biocluster.
+Read the instructions in the page of [MP-Gadget](https://github.com/MP-Gadget/MP-Gadget) to know how to compile the software.
+
 My default path to MP-Gadget is `~/bigdata/codes/MP-Gadget/`.
 And also make sure you have your python environment loaded.
 There are some required python packages needed to be installed:
@@ -42,7 +44,7 @@ python ../run_dmonly.py --json_file=matterLatin_high.json --gadget_dir=<path/to/
 The `--box` flag indicates your preferred boxsize for the simulation. Here we use 256 Mpc/h.
 And the `--npart` flag is the number of dark matter particles per box side you want to put into the simulation box. Here we perform a small size of simulation with 128^3 particles.
 
-After you run the `run_dmonly.py`, if there is no error, there will be several folders generated in you.
+After you run the `run_dmonly.py`, if there is no error, you will find several folders in your current directory.
 They are named `test-<npart>-<box>-dmonly_<ordering in the json file>/`.
 In the above example,
 the first folder will be named `test-128-256-dmonly_0000/`.
@@ -64,8 +66,8 @@ sbatch mpi_submit_genic     # generate initial conditions for MP-Gadget
 sbatch mpi_submit
 ```
 
-After the simulation finished, you can find the output files in the `output/` folder.
-Further information about the output files please check MP-Gadget manual.
+After the simulation finished, you will find the output files in the `output/` folder.
+Further information about the output files please check the [MP-Gadget manual](https://www.overleaf.com/read/kzksrgnzhtnh).
 
 For example, `output/powerspectrum-<scale factor>.txt` contains the data for the matter power spectrum.
 The scale factor is from 0 ~ 1, where 1 means the current Universe.
