@@ -151,6 +151,26 @@ def test_superlowRes_HRsamples(base_dir: str = "data/superlowRes_HRsamples/") ->
     )
 
 
+def test_lowRes_400(base_dir: str = "data/lowRes_400/") -> None:
+    """
+    Test dm-only test lowRes: 128^3 parts
+    """
+    # lowRes : 128^3 particles and 256 Mpc/h
+    res = 128
+    box = 256
+
+    # Latin Hyper Cube sampling
+    n_simulations = 400
+
+    test_dir = lambda i: os.path.join(base_dir, fn_outdir(i, res, box))
+
+    all_submission_dirs = [test_dir(i) for i in range(n_simulations)]
+
+    # test lowRes hdf5
+    test_create_hdf5(
+        all_submission_dirs, Latin_json=os.path.join(base_dir, "matterLatin_400.json")
+    )
+
 def test_customRes(
     base_dir: str, res: int, box: int, n_simulations: int, Latin_json: str
 ):
