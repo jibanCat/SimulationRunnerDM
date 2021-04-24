@@ -120,3 +120,32 @@ cd test-128-256-dmonly_0000
 sbatch mpi_submit_genic     # generate initial conditions for MP-Gadget
 sbatch mpi_submit
 ```
+
+
+## How to generate Latin hypercube JSON file
+
+You will need python packages:
+- `emukit`
+- `pyDOE`
+
+The latin hypercube function is from sbird's lyaemu, which uses rejection-sampled latin hypercubes.
+
+The test file, `test_design.py`, can generate a hypercube with 10 samples with the 5-D LCDM parameters, (h, Omega_0, Omega_b, A_s, n_s).
+
+In case you would like to generate different number of samples (e.g., 50 samples) but with the same bounded uniform prior:
+```python
+import numpy as np
+from latin_design.matter_power_design import MatterDesign
+
+# set the bounds for uniform priors
+matter = MatterDesign(
+    omegab_bounds=(0.0452, 0.0492), 
+    omega0_bounds=(0.268, 0.308), 
+    hubble_bounds=(0.65, 0.75), 
+    scalar_amp_bounds=(1.5*1e-9, 2.8*1e-9), 
+    ns_bounds=(0.9, 0.99))
+
+# number of samples
+point_count = 50
+matter.save_json(point_count, "matterLatin_50.json")
+```
