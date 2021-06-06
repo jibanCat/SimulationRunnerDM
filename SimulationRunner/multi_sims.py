@@ -14,6 +14,7 @@ import re
 import os
 import json
 from glob import glob
+from typing_extensions import ParamSpec
 import numpy as np
 import h5py
 
@@ -50,6 +51,7 @@ class GadgetLoad(object):
         powerspec_prefix: str = "powerspectrum-",
         cpu_prefix: str = "cpu.txt",
         sfr_prefix: str = "sfr.txt",
+        snapshots: str = "Snapshots.txt",
     ) -> None:
         self.submission_dir = submission_dir
 
@@ -92,6 +94,21 @@ class GadgetLoad(object):
         # read in params
         param_filename = os.path.join(submission_dir, "SimulationICs.json")
         self._param_dict = self.read_simulationics(param_filename)
+
+        # read the snapshot list
+        # | No. of snapshot | scale factor |
+        self._snapshots = np.loadtxt(os.path.join(submission_dir, "output", snapshots))
+
+        assert np.all(self._snapshots[:, 1] <= 1)
+        assert np.all(self._snapshots[:, 1] >= 0)
+
+    @property
+    def snapshots(self) -> np.ndarray:
+        """
+        A table records the index of snapshots and
+        the scale factor of the snapshots.
+        """
+        return self._snapshots
 
     @property
     def param_dict(self) -> dict:
