@@ -19,7 +19,7 @@ class MPISubmit(object):
 
     def __init__(self, filename: str, gadget_dir: str = "~/codes/MP-Gadget/"):
         self.filename = filename
-        self:gadget_dir = gadget_dir
+        self.gadget_dir = gadget_dir
 
         with open(self.filename, "r") as f:
             self.txt = f.readlines()
