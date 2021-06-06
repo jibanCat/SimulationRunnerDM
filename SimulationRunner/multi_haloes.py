@@ -63,7 +63,6 @@ class MPISubmit(object):
             f.write("".join(basic_txt))
 
 
-    @property
     def mpirun_foftable(self, snapshot: int) -> str:
         """
         The line to make foftable from PART snapshot       
