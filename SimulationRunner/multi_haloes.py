@@ -85,8 +85,10 @@ class HaloMassFunction(GadgetLoad):
     ./MP-Gadget paramfile.gadget 3 $snapnum
     """
 
-    def __init__(self, submission_dir: str = "test/") -> None:
+    def __init__(self, submission_dir: str = "test/", gadget_dir: str = "~/codes/MP-Gadget/") -> None:
         super(HaloMassFunction, self).__init__(submission_dir)
+
+        self.gadget_dir = gadget_dir
 
         # acquire the current PART files
         self._parts = sorted(self.get_PART_array())
@@ -97,17 +99,24 @@ class HaloMassFunction(GadgetLoad):
         # keep all SBATCH parameters the same;
         # keep all module load the same
         # make the mpirun free parameter
+        self.mpi_submit = MPISubmit(
+            os.path.join(self.submission_dir, "mpi_submit"), self.gadget_dir
+        )
 
         # check # of FOF tables == # of snapshots
         self._pigs_to_run = set(self._parts) - set(self._pigs)
         if len(self._pigs_to_run) > 0:
-            print("[Warning] Some snapshots lack of FOF tables, recommend running ...")
+            print("[Warning] Some snapshots lack of FOF tables, recommend do self.make_foftables.")
 
-    def make_foftables(self, snapshots: List[int]):
+    def make_foftables(self):
         """
-        Make FOF tables from PART
-        """
+        Make FOF tables from PART.
 
+        After generating the sh files, go to the submission folder and submit the .sh file.
+        """
+        self.mpi_submit.make_simulation_foftable(
+            self._pigs_to_run, os.path.join(self.submission_dir, "mpi_submit_foftables")
+        )
 
 
 
