@@ -59,7 +59,7 @@ class MPISubmit(object):
             basic_txt.append(self.mpirun_foftable(snapshot))
         
 
-        with open(mpi_submit_file, "r") as f:
+        with open(mpi_submit_file, "w") as f:
             f.write("".join(basic_txt))
 
 
