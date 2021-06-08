@@ -11,7 +11,7 @@ from .multi_sims import GadgetLoad
 from .hmffromfof import HMFFromFOF
 
 class MPISubmit(object):
-    
+
     """
     Read the mpi_submit, the sbatch submission for MP-Gadget
     into a class.
@@ -24,7 +24,7 @@ class MPISubmit(object):
         with open(self.filename, "r") as f:
             self.txt = f.readlines()
 
-        
+
     def get_basic_setups(self):
         """
         Return the lines without `mpirun` - this (ideally) includes
@@ -48,7 +48,7 @@ class MPISubmit(object):
 
         return basic_txt
 
-    def make_simulation_foftable(self, snapshots: List[int], mpi_submit_file: str = "mpi_submit_foftables") -> None:
+    def make_simulation_foftable(self, snapshots: List[int], mpi_submit_file: str = "mpi_submit_foftables", mpgadget_param_file: str = "mpgadget.param") -> None:
         """
         Generate a submission file for making the fof table (PART -> PIG)
         """
@@ -56,18 +56,17 @@ class MPISubmit(object):
 
         # snapshots could be more than one
         for snapshot in snapshots:
-            basic_txt.append(self.mpirun_foftable(snapshot))
-        
+            basic_txt.append(self.mpirun_foftable(snapshot, mpgadget_param_file))
 
         with open(mpi_submit_file, "w") as f:
             f.write("".join(basic_txt))
 
 
-    def mpirun_foftable(self, snapshot: int) -> str:
+    def mpirun_foftable(self, snapshot: int, mpgadget_param_file: str = "mpgadget.param") -> str:
         """
         The line to make foftable from PART snapshot       
         """
-        return "mpirun --map-by core {} mpgadget.param 3 {}\n".format(self.gadget_dir, snapshot)
+        return "mpirun --map-by core {} {} 3 {}\n".format(self.gadget_dir, mpgadget_param_file, snapshot)
 
 class HaloMassFunction(GadgetLoad):
 
@@ -107,14 +106,37 @@ class HaloMassFunction(GadgetLoad):
         if len(self._pigs_to_run) > 0:
             print("[Warning] Some snapshots lack of FOF tables, recommend do self.make_foftables.")
 
-    def make_foftables(self):
+    def read_hmf(self):
+        """
+        Compute halo mass functions from PIG/ and read them into memory
+        """
+        # checking if you need to re-generate FOF tables
+        assert len(self._parts) == len(self._pigs)
+        # checking if all snaphots in the table are available
+        if len(self.snapshots[:, 0]) > len(self._parts):
+            print("[Warning] missing snaphots ...")
+            print("... recommend rerun {}".format( set(self.snapshots[:, 1]) - set(self._parts) ))
+
+        # snapshot table records all PIG need to read
+        # snapshot table: | No. of snapshot | scale factor |
+        
+        # Note: here we only load all available PIGs, instead of all PIGs on the table
+        self.scale_factors = self.snapshots[:, 1][self._pigs]
+
+        foftable = lambda snapshot : "PIG_{}".format(snapshot)
+
+        for i in self._pigs:
+            HMFFromFOF(foftable=foftable(i), h0=False, bins="auto")
+
+
+    def make_foftables(self, mpgadget_param_file: str = "mpgadget.param"):
         """
         Make FOF tables from PART.
 
         After generating the sh files, go to the submission folder and submit the .sh file.
         """
         self.mpi_submit.make_simulation_foftable(
-            self._pigs_to_run, os.path.join(self.submission_dir, "mpi_submit_foftables")
+            self._pigs_to_run, os.path.join(self.submission_dir, "mpi_submit_foftables", mpgadget_param_file)
         )
 
 
