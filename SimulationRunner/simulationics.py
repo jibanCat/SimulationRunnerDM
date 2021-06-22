@@ -581,6 +581,7 @@ n_s    = {}; rscatter = {}; m_nu = {}; nu_hierarchy = {};
         config['WindModel'] = 'nowind'
         config['BlackHoleOn'] = 0
         config['OutputPotential'] = 0
+        config['MetalReturnOn'] = 0
 
         # Removed due to no need for baryon
         # if self.separate_gas:
