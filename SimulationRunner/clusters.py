@@ -164,8 +164,8 @@ class ClusterClass:
 class HipatiaClass(ClusterClass):
     """Subclassed for specific properties of the Hipatia cluster in Barcelona.
     __init__ and _queue_directive are changed."""
-    def __init__(self, cluster_name: str = "Hipatia", *args, **kwargs) -> None:
-        super().__init__(cluster_name = cluster_name )
+    def __init__(self, *args, cluster_name: str = "Hipatia", **kwargs) -> None:
+        super().__init__(*args, cluster_name = cluster_name, **kwargs)
         self.memory = 2500
 
     def _queue_directive(self, name: Union[str, TextIO],
@@ -195,12 +195,12 @@ class MARCCClass(ClusterClass):
     This has 24 cores per node, shared memory of 128GB pr node.
     Ask for complete nodes.
     Uses SLURM."""
-    def __init__(self, nproc: int = 48, timelimit: Union[float, int] = 8,
-            cluster_name: str = "MARCC", *args, **kwargs) -> None:
+    def __init__(self, *args, nproc: int = 48, timelimit: Union[float, int] = 8,
+            cluster_name: str = "MARCC", **kwargs) -> None:
         #Complete nodes!
         assert nproc % 24 == 0
-        super().__init__(nproc = nproc, timelimit = timelimit,
-            cluster_name = cluster_name)
+        super().__init__(*args, nproc = nproc, timelimit = timelimit,
+            cluster_name = cluster_name, **kwargs)
         self.memory = 5000
 
     def _queue_directive(self, name: Union[str, TextIO], timelimit: Union[float, int], nproc: int = 48,
@@ -244,9 +244,9 @@ class BIOClass(ClusterClass):
     This has 32 cores per node, shared memory of 128GB per node.
     Ask for complete nodes.
     Uses SLURM."""
-    def __init__(self, nproc: int = 256, timelimit: Union[float, int] = 2,
+    def __init__(self, *args, nproc: int = 256, timelimit: Union[float, int] = 2,
             cluster_name: str = "BIOCluster", 
-            cores: int = 32, memory: int = 4, *args, **kwargs) -> None:
+            cores: int = 32, memory: int = 4, **kwargs) -> None:
         #Complete nodes!
         # I change to not complete node since I will submit 
         # many jobs concurrently. 8 * 32 is the group limit, so you can only
@@ -254,8 +254,8 @@ class BIOClass(ClusterClass):
         # submit anything.
         assert nproc % cores == 0
 
-        super().__init__(nproc=nproc, timelimit=timelimit,
-            cluster_name=cluster_name, cores=cores)
+        super().__init__(*args, nproc=nproc, timelimit=timelimit,
+            cluster_name=cluster_name, cores=cores, **kwargs)
 
         self.memory : int = memory
 
@@ -356,10 +356,10 @@ class StampedeClass(ClusterClass):
     This has 48 cores (96 threads) per node, each with two sockets, shared 
     memory of 192GB per node, 96 GB per socket.
     Charged in node-hours, uses SLURM and icc."""
-    def __init__(self, nproc: int = 2, timelimit: Union[float, int] = 3,
-            cluster_name: str = "Stampede", *args, **kwargs) -> None:
-        super().__init__(nproc=nproc,timelimit=timelimit,
-            cluster_name=cluster_name)
+    def __init__(self, *args, nproc: int = 2, timelimit: Union[float, int] = 3,
+            cluster_name: str = "Stampede", **kwargs) -> None:
+        super().__init__(*args, nproc=nproc,timelimit=timelimit,
+            cluster_name=cluster_name, **kwargs)
 
     def _queue_directive(self, name: Union[str, TextIO],
             timelimit: Union[float, int], nproc: int = 2,
@@ -456,8 +456,8 @@ class FronteraClass(StampedeClass):
 
 class HypatiaClass(ClusterClass):
     """Subclass for Hypatia cluster in UCL"""
-    def __init__(self, cluster_name : str ="Hypatia", *args, **kwargs) -> None:
-        super().__init__(cluster_name=cluster_name)
+    def __init__(self, *args, cluster_name : str ="Hypatia", **kwargs) -> None:
+        super().__init__(*args, cluster_name=cluster_name, **kwargs)
 
     def _queue_directive(self, name: Union[str, TextIO],
             timelimit: Union[float, int], nproc: int = 256,

@@ -140,8 +140,10 @@ class SimulationICs(object):
         self._cluster = cluster_class(
             gadget = self.gadgetexe, param      = self.gadgetparam, 
             genic  = self.genicexe,  genicparam = self.genicout, 
-            nproc  = nproc,          cores      = cores) # add nproc and cores
+            nproc  = nproc,          cores      = cores,
+            gadget_dir = gadget_dir)                     # add nproc and cores
                                                          # make them optional
+        assert self._cluster.gadget_dir == os.path.expanduser(gadget_dir)
 
         #For repeatability, we store git hashes of Gadget, GenIC, CAMB and ourselves
         #at time of running.
@@ -201,8 +203,7 @@ n_s    = {}; rscatter = {}; m_nu = {}; nu_hierarchy = {};
     def cluster(self) -> clusters.ClusterClass:
         return self._cluster
 
-    def _set_default_paths(self,
-            gadget_dir: str = "~/codes/MP-Gadget/") -> None:
+    def _set_default_paths(self, gadget_dir) -> None:
         """Default paths and parameter names. 
         This is part of the __init__ construction"""
         #Default parameter file names
