@@ -164,8 +164,8 @@ class ClusterClass:
 class HipatiaClass(ClusterClass):
     """Subclassed for specific properties of the Hipatia cluster in Barcelona.
     __init__ and _queue_directive are changed."""
-    def __init__(self, cluster_name: str = "Hipatia", *args, **kwargs) -> None:
-        super().__init__(cluster_name = cluster_name )
+    def __init__(self, *args, cluster_name: str = "Hipatia", **kwargs) -> None:
+        super().__init__(*args, cluster_name = cluster_name, **kwargs)
         self.memory = 2500
 
     def _queue_directive(self, name: Union[str, TextIO],
@@ -195,12 +195,12 @@ class MARCCClass(ClusterClass):
     This has 24 cores per node, shared memory of 128GB pr node.
     Ask for complete nodes.
     Uses SLURM."""
-    def __init__(self, nproc: int = 48, timelimit: Union[float, int] = 8,
-            cluster_name: str = "MARCC", *args, **kwargs) -> None:
+    def __init__(self, *args, nproc: int = 48, timelimit: Union[float, int] = 8,
+            cluster_name: str = "MARCC", **kwargs) -> None:
         #Complete nodes!
         assert nproc % 24 == 0
-        super().__init__(nproc = nproc, timelimit = timelimit,
-            cluster_name = cluster_name)
+        super().__init__(*args, nproc = nproc, timelimit = timelimit,
+            cluster_name = cluster_name, **kwargs)
         self.memory = 5000
 
     def _queue_directive(self, name: Union[str, TextIO], timelimit: Union[float, int], nproc: int = 48,
@@ -244,9 +244,9 @@ class BIOClass(ClusterClass):
     This has 32 cores per node, shared memory of 128GB per node.
     Ask for complete nodes.
     Uses SLURM."""
-    def __init__(self, nproc: int = 256, timelimit: Union[float, int] = 2,
+    def __init__(self, *args, nproc: int = 256, timelimit: Union[float, int] = 2,
             cluster_name: str = "BIOCluster", 
-            cores: int = 32, memory: int = 4, *args, **kwargs) -> None:
+            cores: int = 32, memory: int = 4, **kwargs) -> None:
         #Complete nodes!
         # I change to not complete node since I will submit 
         # many jobs concurrently. 8 * 32 is the group limit, so you can only
@@ -254,8 +254,8 @@ class BIOClass(ClusterClass):
         # submit anything.
         assert nproc % cores == 0
 
-        super().__init__(nproc=nproc, timelimit=timelimit,
-            cluster_name=cluster_name, cores=cores)
+        super().__init__(*args, nproc=nproc, timelimit=timelimit,
+            cluster_name=cluster_name, cores=cores, **kwargs)
 
         self.memory : int = memory
 
@@ -356,10 +356,10 @@ class StampedeClass(ClusterClass):
     This has 48 cores (96 threads) per node, each with two sockets, shared 
     memory of 192GB per node, 96 GB per socket.
     Charged in node-hours, uses SLURM and icc."""
-    def __init__(self, nproc: int = 2, timelimit: Union[float, int] = 3,
-            cluster_name: str = "Stampede", *args, **kwargs) -> None:
-        super().__init__(nproc=nproc,timelimit=timelimit,
-            cluster_name=cluster_name)
+    def __init__(self, *args, nproc: int = 2, timelimit: Union[float, int] = 3,
+            cluster_name: str = "Stampede", **kwargs) -> None:
+        super().__init__(*args, nproc=nproc,timelimit=timelimit,
+            cluster_name=cluster_name, **kwargs)
 
     def _queue_directive(self, name: Union[str, TextIO],
             timelimit: Union[float, int], nproc: int = 2,
@@ -388,7 +388,7 @@ class StampedeClass(ClusterClass):
         qstring += "ibrun {}\n".format(command)
         return qstring
 
-    def generate_spectra_submit(self, outdir: str) -> None:
+    def generate_spectra_submit(self, outdir: str, threads: int = 48) -> None:
         """Generate a sample spectra_submit file, which generates artificial 
         spectra. The prefix argument is a string at the start of each line.
         It separates queueing system directives from normal comments"""
@@ -398,7 +398,7 @@ class StampedeClass(ClusterClass):
             mpis.write("#!/bin/bash\n")
             #Nodes!
             mpis.write(self._queue_directive(name, timelimit=1, nproc=1, ntasks=1))
-            mpis.write("export OMP_NUM_THREADS=48\n")
+            mpis.write("export OMP_NUM_THREADS=%d\n" % threads)
             mpis.write(str("export PYTHONPATH=$HOME/.local/lib/python3.6/"
                     "site-packages/:$PYTHONPATH\n"))
             mpis.write("python3 flux_power.py output")
@@ -415,10 +415,49 @@ class StampedeClass(ClusterClass):
         #TACC_VEC_FLAGS generates one binary for knl, one for skx.
         return "-fopenmp -O3 -g -Wall ${TACC_VEC_FLAGS} -fp-model fast=1 -simd"
 
+class FronteraClass(StampedeClass):
+    """Subclassed for Stampede2's Skylake nodes.
+    This has 56 cores (56 threads) per node, each with two sockets, shared memory of 192GB per node, 96 GB per socket.
+    Charged in node-hours, uses SLURM and icc. Hyperthreading is OFF"""
+    def _mpi_program(self, command: str) -> str:
+        """String for MPI program to execute."""
+        #Should be 96/ntasks-per-node. This uses the hyperthreading,
+        #which is perhaps an extra 10% performance.
+        qstring = "export OMP_NUM_THREADS=14\n"
+        qstring += "ibrun "+command+"\n"
+        return qstring
+
+    def _queue_directive(self, name: str, timelimit: Union[int, float], nproc: int = 2, prefix: str = "#SBATCH", ntasks: int = 4):
+        """Generate mpi_submit with stampede specific parts"""
+        _ = timelimit
+        qstring = prefix+" --partition=normal\n"
+        qstring += prefix+" --job-name="+name+"\n"
+        qstring += prefix+" --time="+self.timestring(timelimit)+"\n"
+        qstring += prefix+" --nodes=%d\n" % int(nproc)
+        #Number of tasks (processes) per node:
+        #currently optimal is 2 processes per socket.
+        qstring += prefix+" --ntasks-per-node=%d\n" % int(ntasks)
+        qstring += prefix+" --mail-type=end\n"
+        qstring += prefix+" --mail-user="+self.email+"\n"
+        return qstring
+
+    def generate_spectra_submit(self, outdir: str, threads: int = 56):
+        """Generate a sample spectra_submit file, which generates artificial spectra.
+        The prefix argument is a string at the start of each line.
+        It separates queueing system directives from normal comments"""
+        super().generate_spectra_submit(outdir, threads=threads)
+
+    def cluster_optimize(self):
+        """Compiler optimisation options for frontera.
+        Only MP-Gadget pays attention to this. I don't trust the compiler,
+        so these are not as aggressive as usual."""
+        return "-fopenmp -O2 -g -Wall -xCORE-AVX2 -Zp16 -fp-model fast=1"
+
+
 class HypatiaClass(ClusterClass):
     """Subclass for Hypatia cluster in UCL"""
-    def __init__(self, cluster_name : str ="Hypatia", *args, **kwargs) -> None:
-        super().__init__(cluster_name=cluster_name)
+    def __init__(self, *args, cluster_name : str ="Hypatia", **kwargs) -> None:
+        super().__init__(*args, cluster_name=cluster_name, **kwargs)
 
     def _queue_directive(self, name: Union[str, TextIO],
             timelimit: Union[float, int], nproc: int = 256,
