@@ -2,12 +2,13 @@
 Loading derived summary statistics from nbodykit
 from multiple simulations.
 """
-from SimulationRunner.multi_sims import PowerSpec
-from typing import Tuple, List
+from SimulationRunner.multi_sims import MultiPowerSpec, PowerSpec
+from typing import Tuple, List, Optional, Generator
 
 import os
 
 import numpy as np
+import h5py
 
 import nbodykit
 from nbodykit.lab import ArrayCatalog, FFTPower
@@ -182,7 +183,7 @@ class NbodyKitPowerSpec(PowerSpec):
         return k0_sr, ps_sr
 
 
-class MultiNbodyKitPowerSpec:
+class MultiNbodyKitPowerSpec(MultiPowerSpec):
     """
     Output a HDF5 file.
 
@@ -193,5 +194,72 @@ class MultiNbodyKitPowerSpec:
         3. condition on z = 0.
 
     """
-    def __init__(self) -> None:
+    def __init__(self, all_submission_dirs: List[str], Latin_json: str, selected_ind: Optional[np.ndarray],
+        srgan: bool = False, z0 : float = 0.0, Ng: int = 512,
+        srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy") -> None:
+        super().__init__(all_submission_dirs, Latin_json=Latin_json, selected_ind=selected_ind)
+
+        # assign attrs for loading Nbodykit power specs
+        self.srgan = srgan
+        self.z0 = z0
+        self.Ng = Ng
+        self.srgan_path = srgan_path
+
+
+    def create_hdf5(self, hdf5_name: str = "MutliPowerSpecs.hdf5") -> None:
+        """
+        - Create a HDF5 file for powerspecs from multiple simulations.
+        - Each simulation stored in subgroup, includeing powerspecs and
+        camb linear power specs.
+        - Each subgroup has their own simulation parameters extracted from
+        SimulationICs.json to reproduce this simulation.
+        - Parameters from Latin HyperCube sampling stored in upper group level,
+        the order of the sampling is the same as the order of simulations.
+
+        TODO: add a method to append new simulations to a created hdf5.
+        """
+        # open a hdf5 file to store simulations
+        with h5py.File(hdf5_name, "w") as f:
+            # store the sampling from Latin Hyper cube dict into datasets:
+            # since the sampling size should be arbitrary, we should use
+            # datasets instead of attrs to stores these sampling arrays
+            for key, val in self.Latin_dict.items():
+                f.create_dataset(key, data=val)
+
+            # using generator to iterate through simulations,
+            # PowerSpec stores big arrays so we don't want to load
+            # everything to memory
+            for i, ps in enumerate(self.load_PowerSpecs(self.all_submission_dirs)):
+                sim = f.create_group("simulation_{}".format(i))
+
+                # store arrays to sim subgroup
+                sim.create_dataset("scale_factors", data=np.array(ps.scale_factors))
+                sim.create_dataset("powerspecs", data=ps.powerspecs)
+
+                sim.create_dataset("camb_redshifts", data=np.array(ps.camb_redshifts))
+                sim.create_dataset("camb_matters", data=ps.camb_matters)
+
+                # stores param json to metadata attrs
+                for key, val in ps.param_dict.items():
+                    sim.attrs[key] = val
+
+    @staticmethod
+    def load_PowerSpecs(all_submission_dirs: List[str], srgan: bool, z0 : float, Ng: int,
+            srgan_path: str) -> Generator:
+        """
+        Iteratively load the PowerSpec class
+        """
+        for submission_dir in all_submission_dirs:
+            yield NbodyKitPowerSpec(submission_dir, srgan=srgan, z0=z0, Ng=Ng, srgan_path=srgan_path)
+
+    def substract_mean(self) -> np.ndarray:
+        """
+        substract the mean of log P(k)
+        """
+        pass
+
+    def interpolate(self, ks: np.ndarray):
+        """
+        interpolate the log P(k) based on a given ks 
+        """
         pass
