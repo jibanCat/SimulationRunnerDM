@@ -240,7 +240,7 @@ class MultiNbodyKitPowerSpec(MultiPowerSpec):
             # using generator to iterate through simulations,
             # PowerSpec stores big arrays so we don't want to load
             # everything to memory
-            for i, ps in enumerate(self.load_PowerSpecs(self.all_submission_dirs, srgan=self.srgan, z0=self.z0, Ng=self.Ng, self.kmax, srgan_path=self.srgan_path)):
+            for i, ps in enumerate(self.load_PowerSpecs(self.all_submission_dirs, srgan=self.srgan, z0=self.z0, Ng=self.Ng, kmax=self.kmax, srgan_path=self.srgan_path)):
                 sim = f.create_group("simulation_{}".format(i))
 
                 # store arrays to sim subgroup
