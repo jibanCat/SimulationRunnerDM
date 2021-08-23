@@ -80,7 +80,7 @@ class NbodyKitPowerSpec(PowerSpec):
     def __init__(self, 
         submission_dir: str = "test/", srgan: bool = False, z0 : float = 0.0, Ng: int = 512,
         srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy") -> None:
-        super(NbodyKitPowerSpec, self).__init__(submission_dir)
+        super(PowerSpec, self).__init__(submission_dir)
 
         # read into arrays
         # Matter power specs from simulations
