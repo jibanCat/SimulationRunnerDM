@@ -78,13 +78,13 @@ class NbodyKitPowerSpec(PowerSpec):
     """
 
     def __init__(self, 
-        submission_dir: str = "test/", srgan: bool = False, z0 : float = 0.0, Ng: int = 512,
+        submission_dir: str = "test/", srgan: bool = False, z0 : float = 0.0, Ng: int = 512, kmax: float =16.10,
         srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy") -> None:
         super(PowerSpec, self).__init__(submission_dir)
 
         # read into arrays
         # Matter power specs from simulations
-        k0, ps = self.read_powerspec(z0=z0, Ng=Ng)
+        k0, ps = self.read_powerspec(z0=z0, Ng=Ng, kmax=kmax)
 
         self._scale_factors = np.array([1 / (1 + z0)])
 
@@ -130,7 +130,7 @@ class NbodyKitPowerSpec(PowerSpec):
         """
         return self._k0_sr
 
-    def read_powerspec(self, z0: float, Ng: int) -> Tuple[np.ndarray, np.ndarray]:
+    def read_powerspec(self, z0: float, Ng: int, kmax: float) -> Tuple[np.ndarray, np.ndarray]:
         """
         Read power spectrum from a PART/ folder
 
@@ -167,6 +167,9 @@ class NbodyKitPowerSpec(PowerSpec):
         # filter out NaN values
         ind = ~np.isnan(k0)
         assert np.all(ind == ~np.isnan(ps))
+        
+        # set the kmax
+        ind = ind & (k0 <= kmax)
 
         k0 = k0[ind]
         ps = ps[ind]
@@ -202,7 +205,7 @@ class MultiNbodyKitPowerSpec(MultiPowerSpec):
 
     """
     def __init__(self, all_submission_dirs: List[str], Latin_json: str, selected_ind: Optional[np.ndarray],
-        srgan: bool = False, z0 : float = 0.0, Ng: int = 512,
+        srgan: bool = False, z0 : float = 0.0, Ng: int = 512, kmax: float =16.10,
         srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy") -> None:
         super().__init__(all_submission_dirs, Latin_json=Latin_json, selected_ind=selected_ind)
 
@@ -211,6 +214,7 @@ class MultiNbodyKitPowerSpec(MultiPowerSpec):
         self.z0 = z0
         self.Ng = Ng
         self.srgan_path = srgan_path
+        self.kmax = kmax
 
 
     def create_hdf5(self, hdf5_name: str = "MutliPowerSpecs.hdf5") -> None:
@@ -236,7 +240,7 @@ class MultiNbodyKitPowerSpec(MultiPowerSpec):
             # using generator to iterate through simulations,
             # PowerSpec stores big arrays so we don't want to load
             # everything to memory
-            for i, ps in enumerate(self.load_PowerSpecs(self.all_submission_dirs, srgan=self.srgan, z0=self.z0, Ng=self.Ng, srgan_path=self.srgan_path)):
+            for i, ps in enumerate(self.load_PowerSpecs(self.all_submission_dirs, srgan=self.srgan, z0=self.z0, Ng=self.Ng, self.kmax, srgan_path=self.srgan_path)):
                 sim = f.create_group("simulation_{}".format(i))
 
                 # store arrays to sim subgroup
@@ -277,12 +281,6 @@ class HDF5Holder(h5py.File):
         self.saved_filename = saved_filename
         self._mode = mode
 
-    def substract_mean(self) -> np.ndarray:
-        """
-        substract the mean of log P(k)
-        """
-        pass
-
     def interpolate(self, ks: np.ndarray):
         """
         interpolate the log P(k) based on a given ks 
@@ -295,6 +293,8 @@ class HDF5Holder(h5py.File):
         ----
         input.txt (number of simulations, number of parameters) : cosmological parameters
         output.txt (number of simulations, number of k modes) : power spectra
+        
+        The output files will be loaded by matter_multi_fidelity_emu.data_loader.PowerSpecs
         """
         pass
 
