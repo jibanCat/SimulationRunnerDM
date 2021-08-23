@@ -12,7 +12,9 @@ from SimulationRunner.multi_nbodykit import HDF5Holder, MultiNbodyKitPowerSpec, 
 from test_multi_powerspecs import test_fileload
 
 def test_customRes(
-    base_dir: str, res: int, box: int, n_simulations: int, Latin_json: str
+    base_dir: str, res: int, box: int, n_simulations: int, Latin_json: str,
+    srgan: bool = False, z0 : float = 0.0, Ng: int = 512, kmax: float = 16.10,
+    srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy",
 ):
     """
     Create a custom Latin Hyper Cube multi-spec file.
@@ -23,15 +25,18 @@ def test_customRes(
     all_submission_dirs = [test_dir(i) for i in range(n_simulations)]
 
     # test lowRes hdf5
-    test_create_hdf5(all_submission_dirs, Latin_json=os.path.join(base_dir, Latin_json))
+    test_create_hdf5(
+        all_submission_dirs, Latin_json=os.path.join(base_dir, Latin_json),
+        srgan=srgan, z0=z0, Ng=Ng, kmax=kmax, srgan_path=srgan_path
+    )
 
 
 def test_create_hdf5(
     all_submission_dirs: List[str],
     Latin_json: str,
+    srgan: bool, z0 : float, Ng: int, kmax: float,
+    srgan_path: str,
     selected_ind: Optional[np.ndarray] = None,
-    srgan: bool = False, z0 : float = 0.0, Ng: int = 512, kmax: float = 16.10,
-    srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy"
     ) -> None:
     multinps = MultiNbodyKitPowerSpec(
         all_submission_dirs, Latin_json, selected_ind=selected_ind,
@@ -54,7 +59,8 @@ def test_create_hdf5(
         assert "simulation_0" in test_hdf5
         assert "simulation_0/powerspecs" in test_hdf5
         assert "simulation_0/k0" in test_hdf5
-        assert "simulation_0/powerspecs_srgan" in test_hdf5
+        if srgan:
+            assert "simulation_0/powerspecs_srgan" in test_hdf5
 
         # we condition on z0=0
         redend = test_hdf5["simulation_0"].attrs["redend"]
@@ -64,7 +70,7 @@ def test_create_hdf5(
         assert np.abs(scale - sim["scale_factors"][-1]) < 1e-6
 
         # make sure the z0 is the same
-        assert z0 == sim["scale_factors"][0]
+        assert (1 / (z0 + 1)) == sim["scale_factors"][0]
 
         # test the ks SRGAN: should be the same length as powerspecs
         if srgan:
@@ -89,4 +95,4 @@ def test_create_hdf5(
 
     # output the txt files
     f = HDF5Holder("test_dmonly.hdf5")
-    f.to_txt()
+    f.to_txt(srgan_output=srgan)
