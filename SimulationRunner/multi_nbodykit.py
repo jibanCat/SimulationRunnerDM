@@ -100,7 +100,7 @@ class NbodyKitPowerSpec(PowerSpec):
         # Matter power specs from SRGAN (conditioned on one redshift)
         if srgan:
             self.srgan_path = os.path.join(submission_dir, srgan_path)
-            self._k0_sr, self._ps_sr = self.read_srgan_powerspec(srgan_path)
+            self._k0_sr, self._ps_sr = self.read_srgan_powerspec(self.srgan_path)
 
     @property
     def powerspecs(self) -> np.ndarray:
