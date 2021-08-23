@@ -290,7 +290,7 @@ class HDF5Holder(h5py.File):
         """
         pass
 
-    def to_txt(self):
+    def to_txt(self, srgan_output: bool, input_filename: str = "input.txt", output_filename: str = "outupt.txt") -> None:
         """
         output the data to .txt file with:
         ----
@@ -298,8 +298,30 @@ class HDF5Holder(h5py.File):
         output.txt (number of simulations, number of k modes) : power spectra
         
         The output files will be loaded by matter_multi_fidelity_emu.data_loader.PowerSpecs
+
+        Parameters:
+        ----
+        srgan_output : use SRGAN's output as output power spectra
         """
-        pass
+        # prepare input parameters
+        X = np.array([self[name][()] for name in self["parameter_names"]]).T
+
+        num_simulations, _ = X.shape
+
+        # prepare output power spectra
+        if srgan_output: 
+            Y = np.stack([self["simulation_{}".format(i)]["powerspecs_srgan"][()] for i in range(num_simulations)])
+            k0 = self["simulation_0"]["k0_sr"][()]
+            assert k0 == self["simulation_0"]["k0"][()]
+        else:
+            Y = np.stack([self["simulation_{}".format(i)]["powerspecs"][()] for i in range(num_simulations)])
+            k0 = self["simulation_0"]["k0"][()]
+
+        np.savetxt(input_filename, X)
+        np.savetxt(output_filename, Y)
+
+        np.savetxt("input_limits.txt", self["bounds"])
+        np.savetxt("kf.txt", k0)
 
     def __add__(self, other):
         """
