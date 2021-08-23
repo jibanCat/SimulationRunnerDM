@@ -313,7 +313,7 @@ class HDF5Holder(h5py.File):
         if srgan_output: 
             Y = np.stack([self["simulation_{}".format(i)]["powerspecs_srgan"][()] for i in range(num_simulations)])
             k0 = self["simulation_0"]["k0_sr"][()]
-            assert k0 == self["simulation_0"]["k0"][()]
+            assert np.all(k0 == self["simulation_0"]["k0"][()])
         else:
             Y = np.stack([self["simulation_{}".format(i)]["powerspecs"][()] for i in range(num_simulations)])
             k0 = self["simulation_0"]["k0"][()]
