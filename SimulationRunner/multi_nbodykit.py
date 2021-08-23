@@ -86,7 +86,7 @@ class NbodyKitPowerSpec(PowerSpec):
         # Matter power specs from simulations
         k0, ps = self.read_powerspec(z0=z0, Ng=Ng)
 
-        self._scale_factors = 1 / (1 + z0)
+        self._scale_factors = np.array([1 / (1 + z0)])
 
         self._k0 = k0
         self._powerspecs = ps
@@ -163,6 +163,13 @@ class NbodyKitPowerSpec(PowerSpec):
         # the maximum k is controlled by Ng
         k0, ps = load_nbodykit_power(
             powerspec_path, scale_factor=scale_factor, k_max=None, subtract_shotnoise=False, times_kcubic=False, compensated=True, Ng=Ng)
+
+        # filter out NaN values
+        ind = ~np.isnan(k0)
+        assert np.all(ind == ~np.isnan(ps))
+
+        k0 = k0[ind]
+        ps = ps[ind]
 
         return k0, ps
 
