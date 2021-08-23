@@ -252,8 +252,9 @@ class MultiNbodyKitPowerSpec(MultiPowerSpec):
                 sim.create_dataset("powerspecs", data=ps.powerspecs)
                 sim.create_dataset("k0", data=ps.k0)
                 # SRGAN power spectra:
-                sim.create_dataset("powerspecs_srgan", data=ps.powerspecs_srgan)
-                sim.create_dataset("k0_sr", data=ps.k0_sr)
+                if self.srgan:
+                    sim.create_dataset("powerspecs_srgan", data=ps.powerspecs_srgan)
+                    sim.create_dataset("k0_sr", data=ps.k0_sr)
 
                 sim.create_dataset("camb_redshifts", data=np.array(ps.camb_redshifts))
                 sim.create_dataset("camb_matters", data=ps.camb_matters)
