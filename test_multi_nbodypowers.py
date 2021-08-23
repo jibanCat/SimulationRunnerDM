@@ -7,7 +7,7 @@ import os
 import numpy as np
 import h5py
 from SimulationRunner.multi_sims import fn_outdir
-from SimulationRunner.multi_nbodykit import MultiNbodyKitPowerSpec, NbodyKitPowerSpec
+from SimulationRunner.multi_nbodykit import HDF5Holder, MultiNbodyKitPowerSpec, NbodyKitPowerSpec, HDF5Holder
 
 from test_multi_powerspecs import test_fileload
 
@@ -86,3 +86,7 @@ def test_create_hdf5(
         hubble_endend = test_hdf5["simulation_{}".format(length)].attrs["hubble"]
 
         assert np.abs(hubble_end - hubble_endend) < 1e-6
+
+    # output the txt files
+    f = HDF5Holder("test_dmonly.hdf5")
+    f.to_txt()
