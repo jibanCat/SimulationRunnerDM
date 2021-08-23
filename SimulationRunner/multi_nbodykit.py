@@ -102,6 +102,9 @@ class NbodyKitPowerSpec(PowerSpec):
             self.srgan_path = os.path.join(submission_dir, srgan_path)
             self._k0_sr, self._ps_sr = self.read_srgan_powerspec(self.srgan_path)
 
+            # [TODO] you need write a interpolate function if they don't match
+            assert np.all(self._k0_sr == self._k0)
+
     @property
     def powerspecs(self) -> np.ndarray:
         """
@@ -189,7 +192,7 @@ class NbodyKitPowerSpec(PowerSpec):
             k0_sr, ps_sr = np.loadtxt(srgan_path)
         except UnicodeDecodeError as e:
             k0_sr, ps_sr = np.load(srgan_path, allow_pickle=True)
-        
+
         return k0_sr, ps_sr
 
 
