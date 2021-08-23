@@ -263,13 +263,13 @@ class MultiNbodyKitPowerSpec(MultiPowerSpec):
                     sim.attrs[key] = val
 
     @staticmethod
-    def load_PowerSpecs(all_submission_dirs: List[str], srgan: bool, z0 : float, Ng: int,
+    def load_PowerSpecs(all_submission_dirs: List[str], srgan: bool, z0 : float, Ng: int, kmax: float,
             srgan_path: str) -> Generator:
         """
         Iteratively load the PowerSpec class
         """
         for submission_dir in all_submission_dirs:
-            yield NbodyKitPowerSpec(submission_dir, srgan=srgan, z0=z0, Ng=Ng, srgan_path=srgan_path)
+            yield NbodyKitPowerSpec(submission_dir, srgan=srgan, z0=z0, Ng=Ng, kmax=kmax, srgan_path=srgan_path)
 
 class HDF5Holder(h5py.File):
     """

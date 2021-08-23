@@ -30,12 +30,12 @@ def test_create_hdf5(
     all_submission_dirs: List[str],
     Latin_json: str,
     selected_ind: Optional[np.ndarray] = None,
-    srgan: bool = False, z0 : float = 0.0, Ng: int = 512,
+    srgan: bool = False, z0 : float = 0.0, Ng: int = 512, kmax: float = 16.10,
     srgan_path: str = "super-resl/output/PART_008/powerspec_shotnoise.txt.npy"
     ) -> None:
     multinps = MultiNbodyKitPowerSpec(
         all_submission_dirs, Latin_json, selected_ind=selected_ind,
-        srgan=srgan, z0=z0, Ng=Ng, srgan_path=srgan_path)
+        srgan=srgan, z0=z0, Ng=Ng, kmax=kmax, srgan_path=srgan_path)
 
     # test you have simulations in the dirs
     test_fileload(multinps.all_submission_dirs[0])
