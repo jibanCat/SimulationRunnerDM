@@ -100,7 +100,7 @@ class NbodyKitPowerSpec(PowerSpec):
         # Matter power specs from SRGAN (conditioned on one redshift)
         if srgan:
             self.srgan_path = os.path.join(submission_dir, srgan_path)
-            self._k0_sr, self._ps_sr = self.read_srgan_powerspec(self.srgan_path)
+            self._k0_sr, self._ps_sr = self.read_srgan_powerspec(self.srgan_path, kmax=kmax)
 
             # [TODO] you need write a interpolate function if they don't match
             assert np.all(self._k0_sr == self._k0)
@@ -170,7 +170,7 @@ class NbodyKitPowerSpec(PowerSpec):
         # filter out NaN values
         ind = ~np.isnan(k0)
         assert np.all(ind == ~np.isnan(ps))
-        
+
         # set the kmax
         ind = ind & (k0 <= kmax)
         # remove k = 0 since no power there
@@ -182,7 +182,7 @@ class NbodyKitPowerSpec(PowerSpec):
         return k0, ps
 
 
-    def read_srgan_powerspec(self, srgan_path: str) -> Tuple[np.ndarray, np.ndarray]:
+    def read_srgan_powerspec(self, srgan_path: str, kmax: float, ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Read the SRGAN power spectrum directly from the file.
 
@@ -194,6 +194,17 @@ class NbodyKitPowerSpec(PowerSpec):
             k0_sr, ps_sr = np.loadtxt(srgan_path)
         except UnicodeDecodeError as e:
             k0_sr, ps_sr = np.load(srgan_path, allow_pickle=True)
+
+        # filter out NaN values
+        ind = ~np.isnan(k0_sr)
+        assert np.all(ind == ~np.isnan(ps_sr))
+        # set the kmax
+        ind = ind & (k0_sr <= kmax)
+        # remove k = 0 since no power there
+        ind = ind & (k0_sr != 0.0)
+
+        k0_sr = k0_sr[ind]
+        ps_sr = ps_sr[ind]
 
         return k0_sr, ps_sr
 
