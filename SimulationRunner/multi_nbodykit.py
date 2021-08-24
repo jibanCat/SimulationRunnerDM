@@ -173,6 +173,8 @@ class NbodyKitPowerSpec(PowerSpec):
         
         # set the kmax
         ind = ind & (k0 <= kmax)
+        # remove k = 0 since no power there
+        ind = ind & (k0 != 0.0)
 
         k0 = k0[ind]
         ps = ps[ind]
@@ -319,10 +321,10 @@ class HDF5Holder(h5py.File):
             k0 = self["simulation_0"]["k0"][()]
 
         np.savetxt(input_filename, X)
-        np.savetxt(output_filename, Y)
+        np.savetxt(output_filename, np.log10(Y))
 
         np.savetxt("input_limits.txt", self["bounds"])
-        np.savetxt("kf.txt", k0)
+        np.savetxt("kf.txt", np.log10(k0))
 
     def __add__(self, other):
         """
