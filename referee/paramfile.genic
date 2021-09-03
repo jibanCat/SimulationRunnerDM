@@ -1,0 +1,46 @@
+# Directory for output
+OutputDir = ICS
+
+# Base-filename of output files
+FileBase = 256_128_99
+
+Ngrid = 128
+
+# Periodic box size of simulation
+BoxSize = 256000
+
+#Cosmology parameters
+Omega0 = 0.319
+OmegaLambda = 0.681
+OmegaBaryon = 0.049
+# 0 is dm only. 1 is gas
+ProduceGas = 0
+RadiationOn = 1
+
+Sigma8 = 0.83      # power spectrum normalization
+
+# Hubble parameter (may be used for power spec parameterization)
+HubbleParam = 0.67
+
+
+# "2" selects a tabulated power spectrum in
+# the file 'FileWithInputSpectrum'
+# otherwise, Eisenstein & Hu parametrization is used
+WhichSpectrum = 2
+InputPowerRedshift = -1
+DifferentTransferFunctions = 1
+
+Redshift = 99
+FileWithTransferFunction = camb_linear/ics_transfer_99.dat
+FileWithInputSpectrum = camb_linear/ics_matterpow_99.dat
+# filename of tabulated input
+# spectrum (if used)
+
+#  seed for IC-generator
+Seed = 9281110
+NgridNu = 0
+UnitaryAmplitude = 1
+MNue = 0.0
+MNum = 0.0
+MNut = 0.0
+MaxMemSizePerNode = 121600
