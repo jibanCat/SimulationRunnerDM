@@ -275,6 +275,9 @@ class BIOClass(ClusterClass):
         #Number of cpus (threads) per task (process)
         qstring += prefix + " --cpus-per-task=32\n"
 
+        # exclusive, request a full node
+        qstring += prefix + " --exclusive\n"
+
         # mem instead of mem-per-task, since that does not work in new HPCC
         qstring += prefix + " --mem={}G\n".format(self.memory)
         qstring += prefix + " --mail-type=end\n"
@@ -294,7 +297,7 @@ class BIOClass(ClusterClass):
         #Adjust for thread/proc balance per socket.
         #qstring += "mpirun --map-by ppr:3:socket:PE=4 "+self.gadgetexe+" "+
         # self.gadgetparam+"\n"
-        qstring += "mpirun" + command + "\n"
+        qstring += "mpirun " + command + "\n"
         return qstring
 
     def slurm_modules(self) -> str:
@@ -316,7 +319,7 @@ class BIOClass(ClusterClass):
         """Runtime options for cluster. Here memory."""
         # return {'MaxMemSizePerNode': 4 * 32 * 950}
         # return {'MaxMemSizePerNode': 24320} # usually works
-        return {'MaxMemSizePerNode': self.memory * self.cores * 950}
+        return {'MaxMemSizePerNode': self.memory * 1024}
 
     def cluster_optimize(self) -> str:
         """Compiler optimisation options for a specific cluster.
