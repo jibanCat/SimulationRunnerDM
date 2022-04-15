@@ -319,7 +319,7 @@ class BIOClass(ClusterClass):
         """Runtime options for cluster. Here memory."""
         # return {'MaxMemSizePerNode': 4 * 32 * 950}
         # return {'MaxMemSizePerNode': 24320} # usually works
-        return {'MaxMemSizePerNode': self.memory * 1024}
+        return {'MaxMemSizePerNode': self.memory * 978.2608} # make it to be 225000 for memory=230
 
     def cluster_optimize(self) -> str:
         """Compiler optimisation options for a specific cluster.
