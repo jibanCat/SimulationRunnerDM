@@ -241,18 +241,16 @@ class MARCCClass(ClusterClass):
 
 class BIOClass(ClusterClass):
     """Subclassed for the biocluster at UCR.
-    This has 32 cores per node, shared memory of 128GB per node.
+    This has 32 cores per node, shared memory of 256GB per node.
     Ask for complete nodes.
-    Uses SLURM."""
-    def __init__(self, *args, nproc: int = 256, timelimit: Union[float, int] = 2,
+    Uses SLURM.
+    
+    Starting from new HPCC (since March 2022), we can use the threading to speed
+    up the computation.
+    """
+    def __init__(self, *args, nproc: int = 4, timelimit: Union[float, int] = 2,
             cluster_name: str = "BIOCluster", 
-            cores: int = 32, memory: int = 4, **kwargs) -> None:
-        #Complete nodes!
-        # I change to not complete node since I will submit 
-        # many jobs concurrently. 8 * 32 is the group limit, so you can only
-        # submit this kind of job one at the time and the other people cannot 
-        # submit anything.
-        assert nproc % cores == 0
+            cores: int = 2, memory: int = 230, **kwargs) -> None:
 
         super().__init__(*args, nproc=nproc, timelimit=timelimit,
             cluster_name=cluster_name, cores=cores, **kwargs)
@@ -260,7 +258,7 @@ class BIOClass(ClusterClass):
         self.memory : int = memory
 
     def _queue_directive(self, name: Union[str, TextIO],
-            timelimit: Union[float, int], nproc: int = 256,
+            timelimit: Union[float, int], nproc: int = 4,
             prefix: str = "#SBATCH") -> str:
         """Generate mpi_submit with coma specific parts"""
         _ = timelimit
@@ -269,26 +267,28 @@ class BIOClass(ClusterClass):
         qstring =  prefix + " --partition=short\n"
         qstring += prefix + " --job-name={}\n".format(name)
         qstring += prefix + " --time={}\n".format(self.timestring(timelimit))
-        qstring += prefix + " --nodes={}\n".format(str(int(nproc/self.cores)))
+        qstring += prefix + " --nodes={}\n".format(str(int(nproc)))
 
         #Number of tasks (processes) per node
-        qstring += prefix + " --ntasks-per-node={}\n".format(self.cores)
+        qstring += prefix + " --ntasks-per-node=2\n"
 
         #Number of cpus (threads) per task (process)
-        qstring += prefix + " --cpus-per-task=1\n"
+        qstring += prefix + " --cpus-per-task=32\n"
 
-        #Max 128 GB per node (24 cores)
-        qstring += prefix + " --mem-per-cpu={}G\n".format(self.memory)
+        # exclusive, request a full node
+        qstring += prefix + " --exclusive\n"
+
+        # mem instead of mem-per-task, since that does not work in new HPCC
+        qstring += prefix + " --mem={}G\n".format(self.memory)
         qstring += prefix + " --mail-type=end\n"
         qstring += prefix + " --mail-user={}\n".format(self.email)
 
         return qstring
 
     def _mpi_program(self, command: str) -> str:
-        """String for MPI program to execute.
-        Note that this assumes you aren't using threads!"""
+        """String for MPI program to execute."""
         #Change to current directory
-        qstring = "export OMP_NUM_THREADS=1\n"
+        qstring = "export OMP_NUM_THREADS=32\n"
 
         qstring += self.slurm_modules()
 
@@ -297,7 +297,7 @@ class BIOClass(ClusterClass):
         #Adjust for thread/proc balance per socket.
         #qstring += "mpirun --map-by ppr:3:socket:PE=4 "+self.gadgetexe+" "+
         # self.gadgetparam+"\n"
-        qstring += "mpirun --map-by core " + command + "\n"
+        qstring += "mpirun " + command + "\n"
         return qstring
 
     def slurm_modules(self) -> str:
@@ -308,13 +308,9 @@ class BIOClass(ClusterClass):
         ----
         module unload openmpi\n
         module load mpich\n
-        module load intel\n
-        module load gsl\n
         '''
         mstring  = "module unload openmpi\n"
         mstring += "module load mpich\n"
-        mstring += "module load intel\n"
-        mstring += "module load gsl\n"
         mstring += "module list\n"
 
         return mstring
@@ -323,7 +319,7 @@ class BIOClass(ClusterClass):
         """Runtime options for cluster. Here memory."""
         # return {'MaxMemSizePerNode': 4 * 32 * 950}
         # return {'MaxMemSizePerNode': 24320} # usually works
-        return {'MaxMemSizePerNode': self.memory * self.cores * 950}
+        return {'MaxMemSizePerNode': self.memory * 978.2608} # make it to be 225000 for memory=230
 
     def cluster_optimize(self) -> str:
         """Compiler optimisation options for a specific cluster.
