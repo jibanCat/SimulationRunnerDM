@@ -248,9 +248,9 @@ class BIOClass(ClusterClass):
     Starting from new HPCC (since March 2022), we can use the threading to speed
     up the computation.
     """
-    def __init__(self, *args, nproc: int = 4, timelimit: Union[float, int] = 2,
+    def __init__(self, *args, nproc: int = 8, timelimit: Union[float, int] = 2,
             cluster_name: str = "BIOCluster", 
-            cores: int = 2, memory: int = 230, **kwargs) -> None:
+            cores: int = 2, memory: int = 115, **kwargs) -> None:
 
         super().__init__(*args, nproc=nproc, timelimit=timelimit,
             cluster_name=cluster_name, cores=cores, **kwargs)
@@ -258,7 +258,7 @@ class BIOClass(ClusterClass):
         self.memory : int = memory
 
     def _queue_directive(self, name: Union[str, TextIO],
-            timelimit: Union[float, int], nproc: int = 4,
+            timelimit: Union[float, int], nproc: int = 8,
             prefix: str = "#SBATCH") -> str:
         """Generate mpi_submit with coma specific parts"""
         _ = timelimit
@@ -273,10 +273,10 @@ class BIOClass(ClusterClass):
         qstring += prefix + " --ntasks-per-node=2\n"
 
         #Number of cpus (threads) per task (process)
-        qstring += prefix + " --cpus-per-task=32\n"
+        qstring += prefix + " --cpus-per-task=16\n"
 
-        # exclusive, request a full node
-        qstring += prefix + " --exclusive\n"
+        # # exclusive, request a full node
+        # qstring += prefix + " --exclusive\n"
 
         # mem instead of mem-per-task, since that does not work in new HPCC
         qstring += prefix + " --mem={}G\n".format(self.memory)
